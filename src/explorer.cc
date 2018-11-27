@@ -6,6 +6,9 @@
 
 #include <iostream>
 #include <vector>
+#include <map>
+
+#include <nlohmann/json.hpp>
 
 #include "ivanp/math/vec4.hh"
 #include "ivanp/error.hh"
@@ -16,8 +19,14 @@
 using std::cout;
 using std::endl;
 using std::cerr;
-
+using nlohmann::json;
 using namespace ivanp;
+
+struct less_str {
+  bool operator()(const char* a, const char* b) const noexcept {
+    return strcmp(a,b) < 0;
+  }
+};
 
 class file {
   char *m, *pos, *end;
@@ -50,13 +59,28 @@ public:
 struct event {
   vec4<> y[2];
   std::vector<vec4<>> jets;
-};
+} e;
 
 int main(int argc, char* argv[]) {
   if (argc!=2) {
-    cout << "usage: " << argv[0] << " file.dat\n";
+    cerr << "usage: " << argv[0] << " file.dat\n";
     return 1;
   }
+
+  struct fcn_t {
+    double(*f)();
+    bool need_jets;
+  };
+  std::map<const char*,fcn_t,less_str> fcns {
+    { "pT_y1", { []{ return e.y[0].pt(); }, false } },
+    { "pT_y2", { []{ return e.y[1].pt(); }, false } },
+    { "pT_yy", { []{ return (e.y[0]+e.y[1]).pt(); }, false } },
+    { "m_yy",  { []{ return (e.y[0]+e.y[1]).m(); }, false } },
+    { "rat_pT_y1_y2", { []{ return e.y[0].pt()/e.y[1].pt(); }, false } }
+  };
+
+  json req;
+  std::cin >> req;
 
   file dat(argv[1]);
   for (int nbraces=0;;) { // skip header
@@ -70,19 +94,37 @@ int main(int argc, char* argv[]) {
     if (!nbraces) break;
   }
 
-  cout << "[["
-    "\"runNumber\",\"eventNumber\","
-    "\"γγ pT [GeV]\",\"γγ m [GeV]\",\"pT γ1/pT γ2\""
-  "]";
+  bool need_jets = false;
+  const auto& req_cuts = req.at("cuts");
+  std::vector<std::function<bool()>> cuts;
+  cuts.reserve(req_cuts.size());
+  for (const auto& cut : req_cuts) {
+    const auto& fcn = fcns.at(cut.at(0).get_ref<const std::string&>().c_str());
+    const auto& op = cut.at(1).get_ref<const std::string&>();
+    bool cmp = false;
+    if (op=="<") cmp = true; else
+    if (op!=">") throw error("unexpected cut operator \"",op,"\"");
+    const double x = cut.at(2).get<double>();
+    cuts.emplace_back([=,f=fcn.f]{ return (f() < x) == cmp; });
+    if (fcn.need_jets) need_jets = true;
+  }
+
+  std::vector<double(*)()> vars;
+  const auto& req_vars = req.at("vars");
+  vars.reserve(req_vars.size());
+  for (const auto& var : req_vars) {
+    const auto& fcn = fcns.at(var.get_ref<const std::string&>().c_str());
+    vars.emplace_back(fcn.f);
+    if (fcn.need_jets) need_jets = true;
+  }
 
   uint32_t runNumber;
   uint64_t eventNumber;
   uint32_t njets;
   float mom[4];
-  event e;
 
-  bool need_jets = false;
-
+  bool first = true;
+  cout << '[';
   for (;dat;) {
     dat >> runNumber >> eventNumber;
     dat >> mom;
@@ -100,21 +142,17 @@ int main(int argc, char* argv[]) {
       dat.skip(sizeof(mom)*njets);
     }
 
-    const auto yy = e.y[0] + e.y[1];
-    const auto pT_yy = yy.pt();
-    const auto m_yy = yy.m();
+    for (const auto& cut : cuts)
+      if (!cut()) goto next_event;
 
-    if (pT_yy < 250) continue;
-    if (m_yy < 121 || 129 < m_yy) continue;
+    if (first) first = false;
+    else cout << ',';
+    cout << '[' << runNumber << ',' << eventNumber;
+    for (const auto& var : vars)
+      cout << ',' << var();
+    cout << "]";
 
-    const auto ptrat = e.y[0].pt() / e.y[1].pt();
-
-    cout << ",\n["
-      << runNumber << ','
-      << eventNumber << ','
-      << pT_yy << ','
-      << m_yy << ','
-      << ptrat << ']';
+next_event: ;
   }
   cout << "]";
 }
