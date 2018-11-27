@@ -1,5 +1,3 @@
-// #include <fstream>
-// #include <cstdio>
 #include <cstring>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -20,39 +18,6 @@ using std::endl;
 using std::cerr;
 
 using namespace ivanp;
-
-/*
-class file {
-  std::ifstream f;
-public:
-  file(const char* name): f(name,std::ios::binary) { }
-  auto get() { return f.get(); }
-  template <typename T>
-  friend inline file& operator>>(file& f, T& x) {
-    f.f.read(reinterpret_cast<char*>(&x), sizeof(x));
-    return f;
-  }
-  operator bool() const { return !!f; }
-  void skip(std::streamoff off) { f.seekg(off,f.cur); }
-};
-*/
-
-/*
-class file {
-  FILE* f;
-public:
-  file(const char* name): f(fopen(name,"rb")) { }
-  ~file() { fclose(f); }
-  auto get() { return getc(f); }
-  template <typename T>
-  friend inline file& operator>>(file& f, T& x) {
-    fread(reinterpret_cast<char*>(&x),sizeof(x),1,f.f);
-    return f;
-  }
-  operator bool() const { return !feof(f); }
-  void skip(long off) { fseek(f,off,SEEK_CUR); }
-};
-*/
 
 class file {
   char *m, *pos, *end;
@@ -82,6 +47,11 @@ public:
   void skip(size_t off) { pos += off; }
 };
 
+struct event {
+  vec4<> y[2];
+  std::vector<vec4<>> jets;
+};
+
 int main(int argc, char* argv[]) {
   if (argc!=2) {
     cout << "usage: " << argv[0] << " file.dat\n";
@@ -109,42 +79,42 @@ int main(int argc, char* argv[]) {
   uint64_t eventNumber;
   uint32_t njets;
   float mom[4];
-  vec4<> y[2];
-  std::vector<vec4<>> jets;
+  event e;
 
   bool need_jets = false;
 
   for (;dat;) {
-    // if (!(dat >> runNumber)) break;
     dat >> runNumber >> eventNumber;
     dat >> mom;
-    y[0] = { mom, vec4<>::PtEtaPhiM };
+    e.y[0] = { mom, vec4<>::PtEtaPhiM };
     dat >> mom;
-    y[1] = { mom, vec4<>::PtEtaPhiM };
+    e.y[1] = { mom, vec4<>::PtEtaPhiM };
     dat >> njets;
     if (need_jets) {
-      jets.resize(njets);
+      e.jets.resize(njets);
       for (decltype(njets) i=0; i<njets; ++i) {
         dat >> mom;
-        jets[i] = { mom, vec4<>::PtEtaPhiM };
+        e.jets[i] = { mom, vec4<>::PtEtaPhiM };
       }
     } else {
       dat.skip(sizeof(mom)*njets);
     }
 
-    const auto yy = y[0] + y[1];
+    const auto yy = e.y[0] + e.y[1];
     const auto pT_yy = yy.pt();
     const auto m_yy = yy.m();
 
     if (pT_yy < 250) continue;
     if (m_yy < 121 || 129 < m_yy) continue;
 
+    const auto ptrat = e.y[0].pt() / e.y[1].pt();
+
     cout << ",\n["
       << runNumber << ','
       << eventNumber << ','
       << pT_yy << ','
       << m_yy << ','
-      << (y[0].pt()/y[1].pt()) << ']';
+      << ptrat << ']';
   }
   cout << "]";
 }
