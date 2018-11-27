@@ -40,13 +40,16 @@ int main(int argc, char* argv[]) {
   const auto runNumber_i = event_t.index("runNumber");
   const auto eventNumber_i = event_t.index("eventNumber");
 
+  using vec = vec4<double>;
+  std::array<vec,2> y;
+
   for (auto event : sr[0]) {
     const auto& photons = event[photons_i].cast<float(&)[2][4]>();
-    using vec = vec4<double>;
-    const std::array<vec,2> y {{
+    y = {{
       { photons[0], vec::PtEtaPhiM },
       { photons[1], vec::PtEtaPhiM }
     }};
+
     const auto yy = y[0] + y[1];
     const auto pT_yy = yy.pt();
     const auto m_yy = yy.m();
@@ -57,9 +60,9 @@ int main(int argc, char* argv[]) {
     cout << ",\n["
       << event[runNumber_i].cast<uint32_t>() << ','
       << event[eventNumber_i].cast<uint64_t>() << ','
-      << yy.pt() << ','
-      << yy.m() << ','
-      << (y[0].pt()/y[1].pt()) << ']';
+      << pT_yy << ','
+      << m_yy << ','
+      << (photons[0][0]/photons[1][0]) << ']';
   }
   cout << "]";
 }
