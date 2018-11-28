@@ -102,8 +102,8 @@ int main(int argc, char* argv[]) {
     const auto& fcn = fcns.at(cut.at(0).get_ref<const std::string&>().c_str());
     const auto& op = cut.at(1).get_ref<const std::string&>();
     bool cmp = false;
-    if (op=="<") cmp = true; else
-    if (op!=">") throw error("unexpected cut operator \"",op,"\"");
+    if (op=="l") cmp = true; else
+    if (op!="g") throw error("unexpected cut operator \"",op,"\"");
     const double x = cut.at(2).get<double>();
     cuts.emplace_back([=,f=fcn.f]{ return (f() < x) == cmp; });
     if (fcn.need_jets) need_jets = true;
