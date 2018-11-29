@@ -13,6 +13,10 @@ EXT := .cc
 
 ifeq (0, $(words $(findstring $(MAKECMDGOALS), clean)))
 
+ROOT_CXXFLAGS := $(shell root-config --cflags)
+ROOT_LDFLAGS  := $(shell root-config --ldflags)
+ROOT_LDLIBS   := $(shell root-config --libs)
+
 SRCS := $(shell find -L src -type f -name '*$(EXT)')
 DEPS := $(patsubst src/%$(EXT),$(BLD)/%.d,$(SRCS))
 
@@ -24,9 +28,8 @@ all: $(EXES)
 -include $(DEPS)
 
 # -------------------------------------------------------------------
-bin/table: \
-  $(BLD)/ivanp/io/mem_file.o \
-  $(BLD)/ivanp/scribe.o
+C_mxaod_4vec := $(ROOT_CXXFLAGS)
+L_mxaod_4vec := $(ROOT_LDLIBS) -lTreePlayer
 # -------------------------------------------------------------------
 
 $(DEPS): $(BLD)/%.d: src/%$(EXT)
