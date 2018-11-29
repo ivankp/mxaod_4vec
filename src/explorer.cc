@@ -88,6 +88,17 @@ int main(int argc, char* argv[]) {
     { "pT_j2", { []{ return e.nj(2) ? e.j[1].pt() : 0; }, true } },
     { "eta_j1", { []{ return e.nj(1) ? e.j[0].eta() : 0; }, true } },
     { "eta_j2", { []{ return e.nj(2) ? e.j[1].eta() : 0; }, true } },
+
+    { "HT_jets", { []{
+        double HT = 0;
+        for (const auto& j : e.j) HT += j.pt();
+        return HT;
+      }, true } },
+    { "HT_jets_yy", { []{
+        double HT = (e.y[0]+e.y[1]).pt();
+        for (const auto& j : e.j) HT += j.pt();
+        return HT;
+      }, true } },
   };
 
   json req;
