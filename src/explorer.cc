@@ -59,6 +59,8 @@ public:
 struct event {
   vec4<> y[2];
   std::vector<vec4<>> j;
+  auto nj() const noexcept { return j.size(); }
+  bool nj(unsigned n) const noexcept { return j.size() >= n; }
 } e;
 
 int main(int argc, char* argv[]) {
@@ -82,10 +84,10 @@ int main(int argc, char* argv[]) {
     { "eta_y2", { []{ return e.y[1].eta(); }, false } },
 
     { "Njets", { []{ return (double)e.j.size(); }, true } },
-    { "pT_j1", { []{ return e.j[0].pt(); }, true } },
-    { "pT_j2", { []{ return e.j[1].pt(); }, true } },
-    { "eta_j1", { []{ return e.j[0].eta(); }, true } },
-    { "eta_j2", { []{ return e.j[1].eta(); }, true } }
+    { "pT_j1", { []{ return e.nj(1) ? e.j[0].pt() : 0; }, true } },
+    { "pT_j2", { []{ return e.nj(2) ? e.j[1].pt() : 0; }, true } },
+    { "eta_j1", { []{ return e.nj(1) ? e.j[0].eta() : 0; }, true } },
+    { "eta_j2", { []{ return e.nj(2) ? e.j[1].eta() : 0; }, true } },
   };
 
   json req;
