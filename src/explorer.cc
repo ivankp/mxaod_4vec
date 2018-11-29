@@ -86,8 +86,10 @@ int main(int argc, char* argv[]) {
     { "Njets", { []{ return (double)e.j.size(); }, true } },
     { "pT_j1", { []{ return e.nj(1) ? e.j[0].pt() : 0; }, true } },
     { "pT_j2", { []{ return e.nj(2) ? e.j[1].pt() : 0; }, true } },
+    { "pT_j3", { []{ return e.nj(3) ? e.j[2].pt() : 0; }, true } },
     { "eta_j1", { []{ return e.nj(1) ? e.j[0].eta() : 0; }, true } },
     { "eta_j2", { []{ return e.nj(2) ? e.j[1].eta() : 0; }, true } },
+    { "eta_j3", { []{ return e.nj(3) ? e.j[2].eta() : 0; }, true } },
 
     { "HT_jets", { []{
         double HT = 0;
