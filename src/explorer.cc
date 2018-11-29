@@ -123,11 +123,12 @@ int main(int argc, char* argv[]) {
   for (const auto& cut : req_cuts) {
     const auto& fcn = fcns.at(cut.at(0).get_ref<const std::string&>().c_str());
     const auto& op = cut.at(1).get_ref<const std::string&>();
-    bool cmp = false;
-    if (op=="l") cmp = true; else
+    bool lt = false;
+    if (op=="l") lt = true; else
     if (op!="g") throw error("unexpected cut operator \"",op,"\"");
     const double x = cut.at(2).get<double>();
-    cuts.emplace_back([=,f=fcn.f]{ return (f() < x) == cmp; });
+    // cuts.emplace_back([=,f=fcn.f]{ return (f() < x) == cmp; });
+    cuts.emplace_back([=,f=fcn.f]{ return lt ? (f() < x) : (f() > x); });
     if (fcn.need_jets) need_jets = true;
   }
 
