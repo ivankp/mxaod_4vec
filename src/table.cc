@@ -22,6 +22,9 @@ using std::cerr;
 using nlohmann::json;
 using namespace ivanp;
 
+const unsigned nmax = 1000;
+const double jetR = 0.4;
+
 struct less_str {
   bool operator()(const char* a, const char* b) const noexcept {
     return strcmp(a,b) < 0;
@@ -56,51 +59,55 @@ public:
   void skip(size_t off) { pos += off; }
 };
 
-struct event {
-  vec4<> y[2];
-  std::vector<vec4<>> j;
-  auto nj() const noexcept { return j.size(); }
-  bool nj(unsigned n) const noexcept { return j.size() >= n; }
-} e;
+// ==================================================================
+vec4<> y[2], yy;
+std::vector<vec4<>> j;
+
+auto nj() noexcept { return j.size(); }
+bool nj(unsigned n) noexcept { return j.size() >= n; }
+
+double f_HT_jets() noexcept {
+  double HT = 0;
+  for (const auto& j : j) HT += j.pt();
+  return HT;
+}
+double f_HT_jets_yy() noexcept { return f_HT_jets() + yy.pt(); }
+// ==================================================================
 
 int main(int argc, char* argv[]) {
   if (argc!=2) {
     cerr << "usage: " << argv[0] << " file.dat\n";
     return 1;
   }
-  const unsigned nmax = 1000;
 
   struct fcn_t {
     double(*f)();
     bool need_jets;
   };
-  std::map<const char*,fcn_t,less_str> fcns {
-    { "pT_yy", { []{ return (e.y[0]+e.y[1]).pt(); }, false } },
-    { "m_yy",  { []{ return (e.y[0]+e.y[1]).m(); }, false } },
-    { "pT_y1", { []{ return e.y[0].pt(); }, false } },
-    { "pT_y2", { []{ return e.y[1].pt(); }, false } },
-    { "rat_pT_y1_y2", { []{ return e.y[0].pt()/e.y[1].pt(); }, false } },
-    { "eta_y1", { []{ return e.y[0].eta(); }, false } },
-    { "eta_y2", { []{ return e.y[1].eta(); }, false } },
+  const std::map<const char*,fcn_t,less_str> fcns {
+    { "pT_yy", { []{ return yy.pt(); }, false } },
+    { "m_yy",  { []{ return yy.m(); }, false } },
+    { "pT_y1", { []{ return y[0].pt(); }, false } },
+    { "pT_y2", { []{ return y[1].pt(); }, false } },
+    { "rat_pT_y1_y2", { []{ return y[0].pt()/y[1].pt(); }, false } },
+    { "eta_y1", { []{ return y[0].eta(); }, false } },
+    { "eta_y2", { []{ return y[1].eta(); }, false } },
 
-    { "Njets", { []{ return (double)e.j.size(); }, true } },
-    { "pT_j1", { []{ return e.nj(1) ? e.j[0].pt() : 0; }, true } },
-    { "pT_j2", { []{ return e.nj(2) ? e.j[1].pt() : 0; }, true } },
-    { "pT_j3", { []{ return e.nj(3) ? e.j[2].pt() : 0; }, true } },
-    { "eta_j1", { []{ return e.nj(1) ? e.j[0].eta() : 0; }, true } },
-    { "eta_j2", { []{ return e.nj(2) ? e.j[1].eta() : 0; }, true } },
-    { "eta_j3", { []{ return e.nj(3) ? e.j[2].eta() : 0; }, true } },
+    { "Njets", { []{ return (double)nj(); }, true } },
+    { "pT_j1", { []{ return nj(1) ? j[0].pt() : 0; }, true } },
+    { "pT_j2", { []{ return nj(2) ? j[1].pt() : 0; }, true } },
+    { "pT_j3", { []{ return nj(3) ? j[2].pt() : 0; }, true } },
+    { "eta_j1", { []{ return nj(1) ? j[0].eta() : 0; }, true } },
+    { "eta_j2", { []{ return nj(2) ? j[1].eta() : 0; }, true } },
+    { "eta_j3", { []{ return nj(3) ? j[2].eta() : 0; }, true } },
 
-    { "HT_jets", { []{
-        double HT = 0;
-        for (const auto& j : e.j) HT += j.pt();
-        return HT;
-      }, true } },
-    { "HT_jets_yy", { []{
-        double HT = (e.y[0]+e.y[1]).pt();
-        for (const auto& j : e.j) HT += j.pt();
-        return HT;
-      }, true } },
+    { "HT_jets", { f_HT_jets, true } },
+    { "HT_jets_yy", { f_HT_jets_yy, true } },
+
+    { "x_yy", { []{ return yy.pt()/f_HT_jets_yy(); }, true } },
+    { "x_j1", { []{ return nj(1) ? j[0].pt()/f_HT_jets_yy() : 0; }, true } },
+    { "x_j2", { []{ return nj(2) ? j[1].pt()/f_HT_jets_yy() : 0; }, true } },
+    { "x_j3", { []{ return nj(3) ? j[2].pt()/f_HT_jets_yy() : 0; }, true } },
   };
 
   json req;
@@ -154,15 +161,16 @@ int main(int argc, char* argv[]) {
   for (;dat;) {
     dat >> runNumber >> eventNumber;
     dat >> mom;
-    e.y[0] = { mom, vec4<>::PtEtaPhiM };
+    y[0] = { mom, vec4<>::PtEtaPhiM };
     dat >> mom;
-    e.y[1] = { mom, vec4<>::PtEtaPhiM };
+    y[1] = { mom, vec4<>::PtEtaPhiM };
+    yy = y[0] + y[1];
     dat >> njets;
     if (need_jets) {
-      e.j.resize(njets);
+      j.resize(njets);
       for (decltype(njets) i=0; i<njets; ++i) {
         dat >> mom;
-        e.j[i] = { mom, vec4<>::PtEtaPhiM };
+        j[i] = { mom, vec4<>::PtEtaPhiM };
       }
     } else {
       dat.skip(sizeof(mom)*njets);
