@@ -122,6 +122,11 @@ int main(int argc, char* argv[]) {
         for (const auto& j : j) p += j;
         return p.pt();
       }, true } },
+    { "s2", { []{
+        auto p = yy;
+        for (const auto& j : j) p += j;
+        return p.m();
+      }, true } },
   };
 
   json req;
