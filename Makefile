@@ -1,6 +1,6 @@
 SHELL := bash
 CXX := g++
-CPPFLAGS := -std=c++17 -Iinclude
+CPPFLAGS := -std=c++14 -Iinclude
 CXXFLAGS := -Wall -O3 -flto -fmax-errors=3 $(CPPFLAGS)
 # CXXFLAGS := -Wall -g -fmax-errors=3 $(CPPFLAGS) -DDEBUG_AT
 LDFLAGS :=

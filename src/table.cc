@@ -92,6 +92,9 @@ int main(int argc, char* argv[]) {
     { "rat_pT_y1_y2", { []{ return y[0].pt()/y[1].pt(); }, false } },
     { "eta_y1", { []{ return y[0].eta(); }, false } },
     { "eta_y2", { []{ return y[1].eta(); }, false } },
+    { "y_y1", { []{ return y[0].rap(); }, false } },
+    { "y_y2", { []{ return y[1].rap(); }, false } },
+    { "dy_y1_y2", { []{ return std::abs(y[0].rap()-y[1].rap()); }, false } },
 
     { "Njets", { []{ return (double)nj(); }, true } },
     { "pT_j1", { []{ return nj(1) ? j[0].pt() : 0; }, true } },
@@ -100,6 +103,11 @@ int main(int argc, char* argv[]) {
     { "eta_j1", { []{ return nj(1) ? j[0].eta() : 0; }, true } },
     { "eta_j2", { []{ return nj(2) ? j[1].eta() : 0; }, true } },
     { "eta_j3", { []{ return nj(3) ? j[2].eta() : 0; }, true } },
+    { "y_j1", { []{ return nj(1) ? j[0].rap() : 0; }, true } },
+    { "y_j2", { []{ return nj(2) ? j[1].rap() : 0; }, true } },
+    { "y_j3", { []{ return nj(3) ? j[2].rap() : 0; }, true } },
+    { "dy_j1_j2", { []{ return nj(2) ? std::abs(j[0].rap()-j[1].rap()) : 0; }, true } },
+    { "m_jj", { []{ return nj(2) ? (j[0]+j[1]).m() : 0; }, true } },
 
     { "HT_jets", { f_HT_jets, true } },
     { "HT_jets_yy", { f_HT_jets_yy, true } },
@@ -108,6 +116,12 @@ int main(int argc, char* argv[]) {
     { "x_j1", { []{ return nj(1) ? j[0].pt()/f_HT_jets_yy() : 0; }, true } },
     { "x_j2", { []{ return nj(2) ? j[1].pt()/f_HT_jets_yy() : 0; }, true } },
     { "x_j3", { []{ return nj(3) ? j[2].pt()/f_HT_jets_yy() : 0; }, true } },
+
+    { "pT_miss", { []{
+        auto p = yy;
+        for (const auto& j : j) p += j;
+        return p.pt();
+      }, true } },
   };
 
   json req;
