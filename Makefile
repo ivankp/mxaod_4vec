@@ -30,6 +30,10 @@ all: $(EXES)
 # -------------------------------------------------------------------
 C_mxaod_4vec := $(ROOT_CXXFLAGS)
 L_mxaod_4vec := $(ROOT_LDLIBS) -lTreePlayer
+C_varcmp_data := $(ROOT_CXXFLAGS)
+L_varcmp_data := $(ROOT_LDLIBS) -lTreePlayer
+C_varcmp_mc := $(ROOT_CXXFLAGS)
+L_varcmp_mc := $(ROOT_LDLIBS) -lTreePlayer
 # -------------------------------------------------------------------
 
 $(DEPS): $(BLD)/%.d: src/%$(EXT)
