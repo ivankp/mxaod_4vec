@@ -109,6 +109,8 @@ int main(int argc, char* argv[]) {
     { "dy_j1_j2", { []{ return nj(2) ? std::abs(j[0].rap()-j[1].rap()) : 0; }, true } },
     { "m_jj", { []{ return nj(2) ? (j[0]+j[1]).m() : 0; }, true } },
 
+    { "Hj_mass", { []{ return nj(1) ? (yy+j[0]).m() : 0; }, true } },
+
     { "HT_jets", { f_HT_jets, true } },
     { "HT_jets_yy", { f_HT_jets_yy, true } },
 
