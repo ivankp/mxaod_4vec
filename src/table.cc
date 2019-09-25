@@ -54,9 +54,9 @@ public:
 
 // ==================================================================
 ivanp::vec4<> y[2], yy;
-std::vector<ivanp::vec4<>> j;
+std::vector<ivanp::vec4<>> jets;
 
-auto nj() noexcept { return j.size(); }
+auto nj() noexcept { return jets.size(); }
 
 #include "varfcns.hh"
 // ==================================================================
@@ -124,10 +124,10 @@ int main(int argc, char* argv[]) {
     yy = y[0] + y[1];
     dat >> njets;
     if (need_jets) {
-      j.resize(njets);
+      jets.resize(njets);
       for (decltype(njets) i=0; i<njets; ++i) {
         dat >> mom;
-        j[i] = { mom, vec4<>::PtEtaPhiM };
+        jets[i] = { mom, vec4<>::PtEtaPhiM };
       }
     } else {
       dat.skip(sizeof(mom)*njets);

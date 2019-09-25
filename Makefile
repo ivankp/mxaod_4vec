@@ -37,7 +37,7 @@ L_varcmp_mc := $(ROOT_LDLIBS) -lTreePlayer
 C_mxaod_4vec2 := $(ROOT_CXXFLAGS)
 L_mxaod_4vec2 := $(ROOT_LDLIBS) -lTreePlayer -lpcre
 
-bin/read2 bin/filter2 bin/signif2: \
+bin/read2 bin/filter2 bin/bin2: \
   $(BLD)/ivanp/io/mem_file.o
 # -------------------------------------------------------------------
 
