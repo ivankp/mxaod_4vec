@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) {
   std::vector<unsigned> ph_i(2), jet_i;
 
   for (const bool is_mc : {false,true}) {
-    uint32_t n_events = 0;
+    uint32_t nevents = 0;
 
     std::ofstream out(cat(
       ( argc>1 && strlen(argv[1]) ? argv[1] : "." ),
@@ -119,6 +119,9 @@ int main(int argc, char* argv[]) {
       out << 'd';
       write(float_t(total_lumi*1e-3));
     }
+
+    const auto nevents_pos = out.tellp();
+    write(nevents);
 
     for (const auto& s : sets) {
     for (const auto& fname : (is_mc ? s.mc : s.data)) {
@@ -178,7 +181,7 @@ int main(int argc, char* argv[]) {
         const double m_yy = *_m_yy*1e-3;
         if (m_yy<105. || 160.<m_yy) continue;
 
-        ++n_events; // number of events after cuts
+        ++nevents; // number of events after cuts
 
         if (is_mc) {
           write( float_t( // weight
@@ -233,6 +236,11 @@ int main(int argc, char* argv[]) {
         }
       }
     }}
-    TEST(n_events)
+    TEST(nevents)
+
+    out.flush();
+    out.seekp(nevents_pos);
+    write(nevents);
+    out.flush();
   }
 }
