@@ -1,7 +1,5 @@
 #include <iostream>
 #include <fstream>
-#include <type_traits>
-#include <vector>
 
 #include "ivanp/math/vec4.hh"
 #include "ivanp/timed_counter.hh"
@@ -78,8 +76,8 @@ int main(int argc, char* argv[]) {
       }
     }
     if (ent!=nevents_total) {
-      cerr << "\033[31m " << nevents_total << " expected, "
-        << ent << " events read" << endl;
+      cerr << "\033[31m" << nevents_total << " expected, "
+        << ent << " events read\033[0m" << endl;
     }
   }
   TEST(nevents)

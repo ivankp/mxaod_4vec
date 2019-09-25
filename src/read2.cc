@@ -1,6 +1,4 @@
 #include <iostream>
-#include <type_traits>
-#include <vector>
 
 #include "ivanp/io/mem_file.hh"
 #include "ivanp/math/vec4.hh"
