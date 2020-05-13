@@ -19,6 +19,7 @@ using std::cout;
 using std::endl;
 using std::cerr;
 using ivanp::error;
+using ivanp::branch_reader;
 
 using size_type = uint32_t;
 using float_t = float;

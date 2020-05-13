@@ -27,6 +27,7 @@ using std::string;
 using std::vector;
 using ivanp::error;
 using ivanp::cat;
+using ivanp::branch_reader;
 
 using float_t = float;
 
@@ -53,25 +54,30 @@ struct set {
 int main(int argc, char* argv[]) {
   vector<set> sets;
   { nlohmann::json cfg;
-    std::ifstream("mxaods2.json") >> cfg;
+    std::ifstream(argc>2 && strlen(argv[2]) ? argv[2] : "mxaods2.json") >> cfg;
     const string dir = cfg["dir"];
-    for (const auto& s : cfg["sets"].items()) {
+    for (const auto& [set_name, set] : cfg["sets"].items()) {
       sets.emplace_back();
-      auto& _s = sets.back();
-      _s.name = s.key();
-      for (const auto& xs : s.value().items()) {
-        const bool is_data = xs.key()=="data";
-        auto& _xs = is_data ? _s.data : _s.mc;
-        for (const auto& xs : xs.value()) {
-          const string subdir = xs[0];
-          for (const string name : xs[1]) {
-            _xs.emplace_back(dir+subdir+name);
-            if (is_data) {
+      auto& s = sets.back();
+      s.name = set_name;
+      bool lumi = false;
+      for (const auto& [key, val] : set.items()) {
+        bool is_data;
+        if (key=="lumi") { s.lumi = val; lumi = true; continue; }
+        else if (key=="data") is_data = true;
+        else if (key=="mc"  ) is_data = false;
+        else throw error("unexpected json key \"",key,'\"');
+        auto& set_files = is_data ? s.data : s.mc;
+        for (const auto& files : val) {
+          const string& subdir = files[0];
+          for (const string& name : files[1]) {
+            set_files.emplace_back(dir+subdir+name);
+            if (is_data && !lumi) {
               static ivanp::pcre::regex
                 re("(?:.*/)?data.*_(\\d+)ipb\\..*\\.root$");
               ivanp::pcre::match m;
               if (re(m,name)) {
-                _s.lumi += atoi(m[1][0]);
+                s.lumi += atoi(m[1][0]);
               } else throw error(
                 "filename \"",name,"\" didn\'t match lumi regex"
               );
